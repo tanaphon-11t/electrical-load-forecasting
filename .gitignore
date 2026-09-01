@@ -1,0 +1,22 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+.idea/
+.vscode/
+.env
+.env.*
+
+# Local exports, experiments, and thesis materials are not deployment assets.
+Dataset1.xlsx
+Dataset_Updated_Actual_to_2026_06.xlsx
+Dataset_before_2026_05_06.xlsx
+ข้อมูลจริง_สำหรับตรวจสอบ/
+ผลทดลอง/
+พรีเซ็น/
+อธิบายส่วน Finder_files/
+*.docx
+*.pdf
+*.pptx
+*.command
+
+# Keep the production Dataset.xlsx and application image tracked.
