@@ -411,6 +411,106 @@ p, li, label, span, div, .stCaptionContainer, [data-testid="stMarkdownContainer"
     white-space:nowrap;
 }
 
+/* Desktop application shell: the existing six functional tabs become a fixed sidebar. */
+@media (min-width: 1001px) {
+    .block-container,
+    [data-testid="stAppViewContainer"] .block-container {
+        width:calc(100% - 282px) !important;
+        max-width:none !important;
+        margin-left:282px !important;
+        padding-left:1rem !important;
+        padding-right:1rem !important;
+    }
+    header[data-testid="stHeader"] { height:0 !important; min-height:0 !important; }
+    [data-testid="stToolbar"], [data-testid="stDecoration"] { display:none !important; }
+    .stTabs [data-baseweb="tab-list"] {
+        position:fixed !important;
+        z-index:999;
+        left:6px;
+        top:6px;
+        bottom:6px;
+        width:264px;
+        height:auto;
+        box-sizing:border-box;
+        display:flex !important;
+        flex-direction:column !important;
+        align-items:stretch !important;
+        justify-content:flex-start !important;
+        gap:.38rem !important;
+        padding:18px 12px 196px !important;
+        border:1px solid rgba(239,68,68,.28) !important;
+        border-radius:10px !important;
+        background:
+            radial-gradient(circle at 20% 35%,rgba(120,16,32,.26),transparent 55%),
+            linear-gradient(180deg,#180306 0%,#26070d 48%,#160306 100%) !important;
+        box-shadow:10px 0 35px rgba(0,0,0,.36) !important;
+        overflow:hidden !important;
+    }
+    .stTabs [data-baseweb="tab-list"]::before {
+        display:none !important;
+    }
+    .stTabs [data-baseweb="tab-list"]::after {
+        content:"ข้อมูลระบบ\\A ───────────────\\A ▪ เวอร์ชันแอป 2.0.0\\A ▪ Production Dataset\\A ▪ AI Methods 3 ระบบ";
+        white-space:pre-line;
+        position:absolute;
+        left:16px;
+        right:16px;
+        bottom:26px;
+        padding-top:14px;
+        border-top:1px solid rgba(148,163,184,.22);
+        color:#cbd5e1 !important;
+        font-size:.78rem;
+        font-weight:500;
+        line-height:1.8;
+    }
+    .stTabs [data-baseweb="tab"] {
+        width:100% !important;
+        height:46px !important;
+        flex:none !important;
+        justify-content:flex-start !important;
+        padding:0 .8rem !important;
+        border:1px solid transparent !important;
+        background:transparent !important;
+        border-radius:7px !important;
+        color:#e2e8f0 !important;
+        box-shadow:none !important;
+    }
+    .stTabs [data-baseweb="tab"] p { font-size:.94rem !important; font-weight:500 !important; }
+    .stTabs [data-baseweb="tab"]:hover {
+        background:rgba(37,99,235,.28) !important;
+        border-color:rgba(96,165,250,.25) !important;
+    }
+    .stTabs [aria-selected="true"] {
+        background:linear-gradient(135deg,#2452ff,#1d4ed8) !important;
+        border-color:rgba(96,165,250,.55) !important;
+        box-shadow:0 6px 16px rgba(37,99,235,.32) !important;
+    }
+    .stTabs [data-baseweb="tab-border"],
+    .stTabs [data-baseweb="tab-highlight"] { display:none !important; }
+    div[data-testid="stHorizontalBlock"]:has(+ div[data-testid="stTabs"]) {
+        position:fixed !important;
+        z-index:1001 !important;
+        left:18px !important;
+        bottom:136px !important;
+        width:238px !important;
+        height:42px !important;
+        min-height:42px !important;
+        margin:0 !important;
+        gap:0 !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(+ div[data-testid="stTabs"]) > div:first-child {
+        display:none !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(+ div[data-testid="stTabs"]) > div:nth-child(2) {
+        display:block !important;
+        width:100% !important;
+        flex:1 1 100% !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(+ div[data-testid="stTabs"]) button {
+        width:100% !important;
+    }
+}
+
 /* Shared panels used by Data Import, Forecasting, Accuracy, Update and Reports. */
 [data-testid="stMetric"], [data-testid="stAlert"], [data-testid="stDataFrame"],
 [data-testid="stDataEditor"], [data-testid="stFileUploader"],
