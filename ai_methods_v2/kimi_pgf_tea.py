@@ -49,7 +49,9 @@ class PGFTEAArtifact:
 
 def _hampel_filter(series: pd.Series, window: int, threshold: float) -> pd.Series:
     """Replace outliers with median ± threshold * MAD."""
-    result = series.copy()
+    # Keep the working series as float so replacing integer loads with a
+    # Hampel boundary does not emit thousands of dtype warnings during CV.
+    result = series.astype(float).copy()
     rolling_median = series.rolling(window=window, center=True, min_periods=1).median()
     rolling_mad = series.rolling(window=window, center=True, min_periods=1).apply(
         lambda x: np.median(np.abs(x - np.median(x))), raw=True

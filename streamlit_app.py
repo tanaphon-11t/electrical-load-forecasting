@@ -73,6 +73,7 @@ EXTERNAL_CONTEXT_SOURCES = "NASA POWER / PEA / MEA / EGAT"
 SHOW_ADVANCED_TOOLS = False
 SHOW_APP_BANNER = True
 SHOW_TARGET_DEFINITION_NOTICE = False
+AI_TRAINING_MAX_WORKERS = 4
 AI_METHOD_LABELS = {
     "chatgpt_carr1m": "ChatGPT — CARR-1M",
     "gemini_cg_hae_v1": "Gemini — CG-HAE-v1",
@@ -877,7 +878,9 @@ def train_ai_methods(
         return method_id, province, artifact_result, row
 
     tasks = [(method_id, province) for method_id in method_ids for province in provinces]
-    with ThreadPoolExecutor(max_workers=min(2, max(len(tasks), 1))) as pool:
+    with ThreadPoolExecutor(
+        max_workers=min(AI_TRAINING_MAX_WORKERS, max(len(tasks), 1))
+    ) as pool:
         futures = {
             pool.submit(train_one, method_id, province): (method_id, province)
             for method_id, province in tasks
@@ -1402,12 +1405,32 @@ with tab_upload:
     st.markdown("#### เลือกแหล่งข้อมูล")
     system_data_col, external_data_col = st.columns([1, 2])
     with system_data_col:
-        use_system_dataset = st.button(
-            "▶ ใช้ Dataset ของระบบ",
-            use_container_width=True,
-            help="โหลด Dataset.xlsx ที่มาพร้อมกับแอป",
+        internal_dataset_candidates = {
+            "Production — Dataset.xlsx": APP_DIR / "Dataset.xlsx",
+            "Research 2018–2025 — Dataset_2018_2025.xlsx": (
+                APP_DIR / "data" / "operational_3_files" / "Dataset_2018_2025.xlsx"
+            ),
+            "Current — Dataset_Current.xlsx": (
+                APP_DIR / "data" / "operational_3_files" / "Dataset_Current.xlsx"
+            ),
+        }
+        available_internal_datasets = {
+            label: path
+            for label, path in internal_dataset_candidates.items()
+            if path.exists()
+        }
+        selected_internal_label = st.selectbox(
+            "เลือก Dataset สำหรับ Train",
+            options=list(available_internal_datasets),
+            key="selected_internal_dataset",
         )
-        st.caption("ใช้ชุดข้อมูล Production ที่อัปเดตต่อเนื่องในระบบ")
+        use_system_dataset = st.button(
+            "▶ ใช้ Dataset ที่เลือก",
+            use_container_width=True,
+            disabled=not available_internal_datasets,
+            help="โหลดชุดข้อมูลที่เลือกเพื่อใช้ใน AI Training และ Forecasting",
+        )
+        st.caption("Actual_2026.xlsx ใช้ที่หน้า Accuracy Test จึงไม่แสดงในรายการ Train")
     with external_data_col:
         uploaded_file = st.file_uploader(
             "อัปโหลด Dataset ภายนอก (.xlsx)",
@@ -1417,11 +1440,12 @@ with tab_upload:
         )
 
     if use_system_dataset:
-        if not default_dataset_path.exists():
-            st.error("❌ ไม่พบ Dataset.xlsx ของระบบ")
+        selected_dataset_path = available_internal_datasets.get(selected_internal_label)
+        if selected_dataset_path is None or not selected_dataset_path.exists():
+            st.error("❌ ไม่พบ Dataset ที่เลือก")
         else:
             try:
-                system_file_bytes = default_dataset_path.read_bytes()
+                system_file_bytes = selected_dataset_path.read_bytes()
                 system_file_hash = hashlib.md5(system_file_bytes).hexdigest()
                 previous_file_hash = st.session_state.get("uploaded_file_hash")
                 system_df = clean_input_data(pd.read_excel(BytesIO(system_file_bytes)))
@@ -1429,8 +1453,8 @@ with tab_upload:
                 st.session_state.df = system_df
                 st.session_state.uploaded = True
                 st.session_state.uploaded_file_hash = system_file_hash
-                st.session_state.uploaded_file_name = default_dataset_path.name
-                st.session_state.dataset_source = "Dataset ของระบบ"
+                st.session_state.uploaded_file_name = selected_dataset_path.name
+                st.session_state.dataset_source = selected_internal_label
 
                 if previous_file_hash is not None and previous_file_hash != system_file_hash:
                     st.session_state.forecasted = False
@@ -1438,6 +1462,11 @@ with tab_upload:
                     st.session_state.summary_df = None
                     st.session_state.prediction_history = pd.DataFrame()
                     st.session_state.accuracy_history = pd.DataFrame()
+                    st.session_state.ai_method_results = {}
+                    st.session_state.ai_training_results_df = pd.DataFrame()
+                    st.session_state.ai_training_summary_df = pd.DataFrame()
+                    st.session_state.ai_training_cache_keys = {}
+                    st.session_state.pop("ai_training_provinces", None)
             except Exception as e:
                 st.error(f"❌ โหลด Dataset ของระบบไม่สำเร็จ: {e}")
 
@@ -1467,6 +1496,11 @@ with tab_upload:
                 st.session_state.summary_df = None
                 st.session_state.prediction_history = pd.DataFrame()
                 st.session_state.accuracy_history = pd.DataFrame()
+                st.session_state.ai_method_results = {}
+                st.session_state.ai_training_results_df = pd.DataFrame()
+                st.session_state.ai_training_summary_df = pd.DataFrame()
+                st.session_state.ai_training_cache_keys = {}
+                st.session_state.pop("ai_training_provinces", None)
 
             current_month, latest_month, next_month, status = get_date_status(df)
             latest_available = latest_month
@@ -1787,17 +1821,29 @@ with tab_train:
                 )
 
         ai_method_ids = list(AI_METHOD_LABELS)
+        selected_training_methods = st.multiselect(
+            "เลือกวิธีที่ต้องการ Train",
+            options=ai_method_ids,
+            default=ai_method_ids,
+            format_func=lambda method_id: AI_METHOD_LABELS[method_id],
+            key="ai_selected_training_methods",
+            help="เลือกได้ 1–3 วิธี แล้วกดปุ่ม Train วิธีที่เลือก",
+        )
         requested_method_ids = None
 
         compare_col, clear_visual_col = st.columns([3, 1])
         if compare_col.button(
-            "▶ เริ่มการฝึกสอนทั้งหมด — Train & Compare All",
+            "▶ Train วิธีที่เลือก — Train & Compare Selected",
             key="train_compare_all",
             type="primary",
             use_container_width=True,
+            disabled=not selected_training_methods or not ai_selected_provinces,
         ):
-            requested_method_ids = ai_method_ids
-        clear_visual_col.caption(f"เลือกแล้ว {len(ai_selected_provinces)}/{len(ai_province_options)} จังหวัด")
+            requested_method_ids = selected_training_methods
+        clear_visual_col.caption(
+            f"เลือก {len(selected_training_methods)}/3 วิธี • "
+            f"{len(ai_selected_provinces)}/{len(ai_province_options)} จังหวัด"
+        )
         force_retrain_ai = clear_visual_col.checkbox(
             "Train ใหม่แม้มี Cache",
             key="ai_force_retrain",
@@ -1844,7 +1890,12 @@ with tab_train:
                     """,
                     unsafe_allow_html=True,
                 )
-                if st.button(button_label, key=button_key, use_container_width=True):
+                if st.button(
+                    button_label,
+                    key=button_key,
+                    use_container_width=True,
+                    disabled=not ai_selected_provinces,
+                ):
                     requested_method_ids = [method_id]
 
         if requested_method_ids is not None:
