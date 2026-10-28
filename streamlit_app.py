@@ -412,7 +412,7 @@ p, li, label, span, div, .stCaptionContainer, [data-testid="stMarkdownContainer"
 }
 
 /* Desktop application shell: the existing six functional tabs become a fixed sidebar. */
-@media (min-width: 1001px) {
+@media (min-width: 701px) {
     .block-container,
     [data-testid="stAppViewContainer"] .block-container {
         width:calc(100% - 282px) !important;
@@ -542,7 +542,7 @@ p, li, label, span, div, .stCaptionContainer, [data-testid="stMarkdownContainer"
 }
 .app-footer { background:linear-gradient(135deg,rgba(25,20,26,.96),rgba(22,26,35,.92)); border-color:rgba(239,68,68,.18); }
 
-@media (max-width: 1000px) {
+@media (max-width: 700px) {
     .block-container { width:100% !important; margin-left:0 !important; }
     .stTabs [data-baseweb="tab-list"] {
         position:static !important;
