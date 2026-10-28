@@ -1402,73 +1402,11 @@ with tab_upload:
             "ข้อมูลนี้ไม่ใช่โหลดไฟฟ้ารวมของผู้ใช้ทุกประเภทในจังหวัด"
         )
 
-    st.markdown("#### เลือกแหล่งข้อมูล")
-    system_data_col, external_data_col = st.columns([1, 2])
-    with system_data_col:
-        internal_dataset_candidates = {
-            "Production — Dataset.xlsx": APP_DIR / "Dataset.xlsx",
-            "Research 2018–2025 — Dataset_2018_2025.xlsx": (
-                APP_DIR / "data" / "operational_3_files" / "Dataset_2018_2025.xlsx"
-            ),
-            "Current — Dataset_Current.xlsx": (
-                APP_DIR / "data" / "operational_3_files" / "Dataset_Current.xlsx"
-            ),
-        }
-        available_internal_datasets = {
-            label: path
-            for label, path in internal_dataset_candidates.items()
-            if path.exists()
-        }
-        selected_internal_label = st.selectbox(
-            "เลือก Dataset สำหรับ Train",
-            options=list(available_internal_datasets),
-            key="selected_internal_dataset",
-        )
-        use_system_dataset = st.button(
-            "▶ ใช้ Dataset ที่เลือก",
-            use_container_width=True,
-            disabled=not available_internal_datasets,
-            help="โหลดชุดข้อมูลที่เลือกเพื่อใช้ใน AI Training และ Forecasting",
-        )
-        st.caption("Actual_2026.xlsx ใช้ที่หน้า Accuracy Test จึงไม่แสดงในรายการ Train")
-    with external_data_col:
-        uploaded_file = st.file_uploader(
-            "อัปโหลด Dataset ภายนอก (.xlsx)",
-            type=["xlsx"],
-            help="ต้องมี Province, Date, Load_(kWh), Temperature_C และจะไม่เขียนทับ Dataset ของระบบ",
-            key="external_dataset_upload",
-        )
-
-    if use_system_dataset:
-        selected_dataset_path = available_internal_datasets.get(selected_internal_label)
-        if selected_dataset_path is None or not selected_dataset_path.exists():
-            st.error("❌ ไม่พบ Dataset ที่เลือก")
-        else:
-            try:
-                system_file_bytes = selected_dataset_path.read_bytes()
-                system_file_hash = hashlib.md5(system_file_bytes).hexdigest()
-                previous_file_hash = st.session_state.get("uploaded_file_hash")
-                system_df = clean_input_data(pd.read_excel(BytesIO(system_file_bytes)))
-
-                st.session_state.df = system_df
-                st.session_state.uploaded = True
-                st.session_state.uploaded_file_hash = system_file_hash
-                st.session_state.uploaded_file_name = selected_dataset_path.name
-                st.session_state.dataset_source = selected_internal_label
-
-                if previous_file_hash is not None and previous_file_hash != system_file_hash:
-                    st.session_state.forecasted = False
-                    st.session_state.all_results = None
-                    st.session_state.summary_df = None
-                    st.session_state.prediction_history = pd.DataFrame()
-                    st.session_state.accuracy_history = pd.DataFrame()
-                    st.session_state.ai_method_results = {}
-                    st.session_state.ai_training_results_df = pd.DataFrame()
-                    st.session_state.ai_training_summary_df = pd.DataFrame()
-                    st.session_state.ai_training_cache_keys = {}
-                    st.session_state.pop("ai_training_provinces", None)
-            except Exception as e:
-                st.error(f"❌ โหลด Dataset ของระบบไม่สำเร็จ: {e}")
+    uploaded_file = st.file_uploader(
+        "เลือกไฟล์ Excel (.xlsx)",
+        type=["xlsx"],
+        key="external_dataset_upload",
+    )
 
     if uploaded_file is not None:
         try:
