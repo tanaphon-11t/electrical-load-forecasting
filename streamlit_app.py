@@ -74,6 +74,7 @@ SHOW_ADVANCED_TOOLS = False
 SHOW_APP_BANNER = True
 SHOW_TARGET_DEFINITION_NOTICE = False
 AI_TRAINING_MAX_WORKERS = 4
+APP_BUILD_ID = "ui-sidebar-20261028.1"
 AI_METHOD_LABELS = {
     "chatgpt_carr1m": "ChatGPT — CARR-1M",
     "gemini_cg_hae_v1": "Gemini — CG-HAE-v1",
@@ -304,6 +305,9 @@ p, li, label, span, div, .stCaptionContainer, [data-testid="stMarkdownContainer"
     -webkit-text-fill-color: #ffffff !important;
     border: 1px solid rgba(255,255,255,.24) !important;
 }
+[data-testid="stFileUploaderDropzone"] button [data-testid="stIconMaterial"] {
+    display: none !important;
+}
 [data-testid="stFileUploaderDropzone"] svg {
     fill: #67e8f9 !important;
     color: #67e8f9 !important;
@@ -410,6 +414,20 @@ p, li, label, span, div, .stCaptionContainer, [data-testid="stMarkdownContainer"
     line-height:1.45;
     white-space:nowrap;
 }
+.app-build-id {
+    position:fixed;
+    z-index:10000;
+    right:8px;
+    bottom:8px;
+    padding:3px 7px;
+    border:1px solid rgba(148,163,184,.28);
+    border-radius:5px;
+    background:rgba(15,23,42,.86);
+    color:#cbd5e1 !important;
+    font-size:.68rem;
+    line-height:1.2;
+    pointer-events:none;
+}
 
 /* Desktop application shell: the existing six functional tabs become a fixed sidebar. */
 @media (min-width: 701px) {
@@ -423,7 +441,8 @@ p, li, label, span, div, .stCaptionContainer, [data-testid="stMarkdownContainer"
     }
     header[data-testid="stHeader"] { height:0 !important; min-height:0 !important; }
     [data-testid="stToolbar"], [data-testid="stDecoration"] { display:none !important; }
-    .stTabs [data-baseweb="tab-list"] {
+    .stTabs [data-baseweb="tab-list"],
+    [data-testid="stTabs"] [role="tablist"] {
         position:fixed !important;
         z-index:999;
         left:6px;
@@ -446,10 +465,12 @@ p, li, label, span, div, .stCaptionContainer, [data-testid="stMarkdownContainer"
         box-shadow:10px 0 35px rgba(0,0,0,.36) !important;
         overflow:hidden !important;
     }
-    .stTabs [data-baseweb="tab-list"]::before {
+    .stTabs [data-baseweb="tab-list"]::before,
+    [data-testid="stTabs"] [role="tablist"]::before {
         display:none !important;
     }
-    .stTabs [data-baseweb="tab-list"]::after {
+    .stTabs [data-baseweb="tab-list"]::after,
+    [data-testid="stTabs"] [role="tablist"]::after {
         content:"ข้อมูลระบบ\\A ───────────────\\A ▪ เวอร์ชันแอป 2.0.0\\A ▪ Production Dataset\\A ▪ AI Methods 3 ระบบ";
         white-space:pre-line;
         position:absolute;
@@ -463,7 +484,8 @@ p, li, label, span, div, .stCaptionContainer, [data-testid="stMarkdownContainer"
         font-weight:500;
         line-height:1.8;
     }
-    .stTabs [data-baseweb="tab"] {
+    .stTabs [data-baseweb="tab"],
+    [data-testid="stTabs"] button[role="tab"] {
         width:100% !important;
         height:46px !important;
         flex:none !important;
@@ -475,8 +497,13 @@ p, li, label, span, div, .stCaptionContainer, [data-testid="stMarkdownContainer"
         color:#e2e8f0 !important;
         box-shadow:none !important;
     }
-    .stTabs [data-baseweb="tab"] p { font-size:.94rem !important; font-weight:500 !important; }
-    .stTabs [data-baseweb="tab"]:hover {
+    .stTabs [data-baseweb="tab"] p,
+    [data-testid="stTabs"] button[role="tab"] p {
+        font-size:.94rem !important;
+        font-weight:500 !important;
+    }
+    .stTabs [data-baseweb="tab"]:hover,
+    [data-testid="stTabs"] button[role="tab"]:hover {
         background:rgba(37,99,235,.28) !important;
         border-color:rgba(96,165,250,.25) !important;
     }
@@ -544,7 +571,8 @@ p, li, label, span, div, .stCaptionContainer, [data-testid="stMarkdownContainer"
 
 @media (max-width: 700px) {
     .block-container { width:100% !important; margin-left:0 !important; }
-    .stTabs [data-baseweb="tab-list"] {
+    .stTabs [data-baseweb="tab-list"],
+    [data-testid="stTabs"] [role="tablist"] {
         position:static !important;
         display:flex !important;
         flex-direction:row !important;
@@ -1321,6 +1349,10 @@ if (
 # TITLE
 # =================================
 
+st.markdown(
+    f'<div class="app-build-id">Build {APP_BUILD_ID}</div>',
+    unsafe_allow_html=True,
+)
 
 
 # Banner is retained behind a UI flag so it can be restored without changing assets.
